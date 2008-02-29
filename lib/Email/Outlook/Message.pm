@@ -28,6 +28,8 @@ Parses .msg message files as produced by Microsoft Outlook.
 
     Output result as an Email::MIME object.
 
+=back
+
 =head1 BUGS
 
 Not all data that's in the .msg file is converted. There simply are some
@@ -49,22 +51,21 @@ it under the same terms as Perl itself.
 use strict;
 use warnings;
 use Email::Simple;
-use Email::Abstract;
 use Email::MIME::Creator;
 use Email::MIME::ContentType;
 use OLE::Storage_Lite;
 use POSIX;
 use Carp;
 
-use constant DIR_TYPE => 1;
-use constant FILE_TYPE => 2;
+my $DIR_TYPE = 1;
+my $FILE_TYPE = 2;
 
-use vars qw($skipproperties $skipheaders $VERSION);
-$VERSION = "0.903";
+use vars qw($VERSION);
+$VERSION = "0.904";
 #
 # Descriptions partially based on mapitags.h
 #
-$skipproperties = {
+my $skipproperties = {
   # Envelope properties
   '000B' => "Conversation key?",
   '001A' => "Type of message",
@@ -142,8 +143,8 @@ $skipproperties = {
   '8002' => "Unknown, binary data",
 };
 
-$skipheaders = {
-  map { uc($_) => 1 } 
+my $skipheaders = {
+  map { uc($_) => 1 }
   "MIME-Version",
   "Content-Type",
   "Content-Transfer-Encoding",
@@ -153,16 +154,16 @@ $skipheaders = {
   "X-MS-Has-Attach"
 };
 
-use constant ENCODING_UNICODE => '001F';
-use constant KNOWN_ENCODINGS => {
-    '000D' => 'Directory',
-    '001F' => 'Unicode',
-    '001E' => 'Ascii?',
-    '0102' => 'Binary',
+my $ENCODING_UNICODE = '001F';
+my $KNOWN_ENCODINGS = {
+  '000D' => 'Directory',
+  '001F' => 'Unicode',
+  '001E' => 'Ascii?',
+  '0102' => 'Binary',
 };
 
-use constant MAP_ATTACHMENT_FILE => {
-  '3701' => ["DATA",	    0], # Data
+my $MAP_ATTACHMENT_FILE = {
+  '3701' => ["DATA",        0], # Data
   '3704' => ["SHORTNAME",   1], # Short file name
   '3707' => ["LONGNAME",    1], # Long file name
   '370E' => ["MIMETYPE",    1], # mime type
@@ -170,28 +171,28 @@ use constant MAP_ATTACHMENT_FILE => {
   '3716' => ["DISPOSITION", 1], # disposition
 };
 
-use constant MAP_SUBITEM_FILE => {
-  '1000' => ["BODY_PLAIN",	1], # Body
-  '1013' => ["BODY_HTML",	1], # HTML Version of body
-  '0037' => ["SUBJECT",		1], # Subject
-  '0047' => ["SUBMISSION_ID",	1], # Seems to contain the date
-  '007D' => ["HEAD",		1], # Full headers
-  '0C1A' => ["FROM",		1], # From: Name
-  '0C1E' => ["FROM_ADDR_TYPE",	1], # From: Address type
-  '0C1F' => ["FROM_ADDR",	1], # From: Address
-  '0E04' => ["TO",		1], # To: Names
-  '0E03' => ["CC",		1], # Cc: Names
-  '1035' => ["MESSAGEID",	1], # Message-Id
-  '1042' => ["INREPLYTO",	1], # In reply to Message-Id
+my $MAP_SUBITEM_FILE = {
+  '1000' => ["BODY_PLAIN",      1], # Body
+  '1013' => ["BODY_HTML",       1], # HTML Version of body
+  '0037' => ["SUBJECT",         1], # Subject
+  '0047' => ["SUBMISSION_ID",   1], # Seems to contain the date
+  '007D' => ["HEAD",            1], # Full headers
+  '0C1A' => ["FROM",            1], # From: Name
+  '0C1E' => ["FROM_ADDR_TYPE",  1], # From: Address type
+  '0C1F' => ["FROM_ADDR",       1], # From: Address
+  '0E04' => ["TO",              1], # To: Names
+  '0E03' => ["CC",              1], # Cc: Names
+  '1035' => ["MESSAGEID",       1], # Message-Id
+  '1042' => ["INREPLYTO",       1], # In reply to Message-Id
 };
 
-use constant MAP_ADDRESSITEM_FILE => {
-  '3001' => ["NAME",		1], # Real name
-  '3002' => ["TYPE",		1], # Address type
-  '403D' => ["TYPE",		1], # Address type
-  '3003' => ["ADDRESS",		1], # Address
-  '403E' => ["ADDRESS",		1], # Address
-  '39FE' => ["SMTPADDRESS",	1], # SMTP Address variant
+my $MAP_ADDRESSITEM_FILE = {
+  '3001' => ["NAME",            1], # Real name
+  '3002' => ["TYPE",            1], # Address type
+  '403D' => ["TYPE",            1], # Address type
+  '3003' => ["ADDRESS",         1], # Address
+  '403E' => ["ADDRESS",         1], # Address
+  '39FE' => ["SMTPADDRESS",     1], # SMTP Address variant
 };
 
 #
@@ -199,24 +200,23 @@ use constant MAP_ADDRESSITEM_FILE => {
 #
 
 sub new {
-  my $that = shift;
+  my $class = shift;
   my $file = shift or croak "File name is required parameter";
   my $verbose = shift;
 
-  my $self = $that->_empty_new;
+  my $self = $class->_empty_new;
 
   my $msg = OLE::Storage_Lite->new($file);
   my $pps = $msg->getPpsTree(1);
-  $pps or die "Parsing $file as OLE file failed.";
-  $self->_set_verbosity(1) if $verbose;
+  $pps or croak "Parsing $file as OLE file failed.";
+  $self->_set_verbosity($verbose);
   $self->_process_root_dir($pps);
 
   return $self;
 }
 
 sub _empty_new {
-  my $that = shift;
-  my $class = ref $that || $that;
+  my $class = shift;
 
   return bless {
     ADDRESSES => [], ATTACHMENTS => [], FROM_ADDR_TYPE => "",
@@ -283,16 +283,14 @@ sub to_email_mime {
 
 sub _set_verbosity {
   my ($self, $verbosity) = @_;
-  defined $verbosity or die "Internal error: no verbosity level";
-  $self->{VERBOSE} = $verbosity;
+  $self->{VERBOSE} = $verbosity ? 1 : 0;
+  return;
 }
 
 #
-# Below are functions that walk the PPS tree. The *_dir functions handle
-# processing the directory nodes of the tree (mainly, iterating over the
-# children), whereas the *Item functions handle processing the items in the
-# directory (if such an item is itself a directory, it will in turn be
-# processed by the relevant *_dir function).
+# Below are functions that walk the PPS tree. This is simply a tree walk.
+# It's not really recursive (except when an attachment contains a .msg
+# file), since the tree is shallow (max. 1 subdirectory deep).
 #
 # The structure is as follows:
 #
@@ -301,7 +299,7 @@ sub _set_verbosity {
 #   Dirs containting adresses
 #     Items with properties of the address
 #   Dirs containing Attachments
-#     Items with properties of the attachment (inlcluding its data)
+#     Items with properties of the attachment (including its data)
 #     Dir that is itself a .msg file (if the attachment is an email).
 #
 
@@ -314,14 +312,15 @@ sub _process_root_dir {
   my ($self, $pps) = @_;
 
   foreach my $child (@{$pps->{Child}}) {
-    if ($child->{Type} == DIR_TYPE) {
+    if ($child->{Type} == $DIR_TYPE) {
       $self->_process_subdirectory($child);
-    } elsif ($child->{Type} == FILE_TYPE) {
-      $self->_process_pps_file_entry($child, $self, MAP_SUBITEM_FILE);
+    } elsif ($child->{Type} == $FILE_TYPE) {
+      $self->_process_pps_file_entry($child, $self, $MAP_SUBITEM_FILE);
     } else {
-      warn "Unknown entry type: $child->{Type}";
+      carp "Unknown entry type: $child->{Type}";
     }
   }
+  return;
 }
 
 #
@@ -334,13 +333,14 @@ sub _process_subdirectory {
 
   my $name = $self->_get_pps_name($pps);
 
-  if ($name =~ /__recip_version1 0_ /) { # Address of one recipient
+  if ($name =~ '__recip_version1 0_ ') { # Address of one recipient
     $self->_process_address($pps);
   } elsif ($name =~ '__attach_version1 0_ ') { # Attachment
     $self->_process_attachment($pps);
   } else {
     $self->_warn_about_unknown_directory($pps);
   }
+  return;
 }
 
 #
@@ -352,15 +352,16 @@ sub _process_address {
   my $addr_info = { NAME => undef, ADDRESS => undef, TYPE => "" };
 
   foreach my $child (@{$pps->{Child}}) {
-    if ($child->{Type} == DIR_TYPE) {
+    if ($child->{Type} == $DIR_TYPE) {
       $self->_warn_about_unknown_directory($child); # DIR Entries: There should be none.
-    } elsif ($child->{Type} == FILE_TYPE) {
-      $self->_process_pps_file_entry($child, $addr_info, MAP_ADDRESSITEM_FILE);
+    } elsif ($child->{Type} == $FILE_TYPE) {
+      $self->_process_pps_file_entry($child, $addr_info, $MAP_ADDRESSITEM_FILE);
     } else {
-      warn "Unknown entry type: $child->{Type}";
+      carp "Unknown entry type: $child->{Type}";
     }
   }
   push @{$self->{ADDRESSES}}, $addr_info;
+  return;
 }
 
 #
@@ -370,27 +371,28 @@ sub _process_attachment {
   my ($self, $pps) = @_;
 
   my $attachment = {
-    SHORTNAME	=> undef,
-    LONGNAME	=> undef,
-    MIMETYPE	=> 'application/octet-stream',
-    ENCODING	=> 'base64',
-    DISPOSITION	=> 'attachment',
-    CONTENTID	=> undef,
-    DATA	=> undef,
+    SHORTNAME   => undef,
+    LONGNAME    => undef,
+    MIMETYPE    => 'application/octet-stream',
+    ENCODING    => 'base64',
+    DISPOSITION => 'attachment',
+    CONTENTID   => undef,
+    DATA        => undef,
   };
   foreach my $child (@{$pps->{Child}}) {
-    if ($child->{Type} == DIR_TYPE) {
+    if ($child->{Type} == $DIR_TYPE) {
       $self->_process_attachment_subdirectory($child, $attachment);
-    } elsif ($child->{Type} == FILE_TYPE) {
-      $self->_process_pps_file_entry($child, $attachment, MAP_ATTACHMENT_FILE);
+    } elsif ($child->{Type} == $FILE_TYPE) {
+      $self->_process_pps_file_entry($child, $attachment, $MAP_ATTACHMENT_FILE);
     } else {
-      warn "Unknown entry type: $child->{Type}";
+      carp "Unknown entry type: $child->{Type}";
     }
   }
   if ($attachment->{MIMETYPE} eq 'multipart/signed') {
     $attachment->{ENCODING} = '8bit';
   }
   push @{$self->{ATTACHMENTS}}, $attachment;
+  return;
 }
 
 #
@@ -401,8 +403,8 @@ sub _process_attachment_subdirectory {
   my $name = $self->_get_pps_name($pps);
   my ($property, $encoding) = $self->_parse_item_name($name);
 
-  if ($property eq '3701') {	# Nested msg file
-    my $msgp = $self->_empty_new();
+  if ($property eq '3701') { # Nested msg file
+    my $msgp = ref($self)->_empty_new();
     $msgp->_set_verbosity($self->{VERBOSE});
     $msgp->_process_root_dir($pps);
 
@@ -412,6 +414,7 @@ sub _process_attachment_subdirectory {
   } else {
     $self->_warn_about_unknown_directory($pps);
   }
+  return;
 }
 
 #
@@ -436,6 +439,7 @@ sub _process_pps_file_entry {
   } else {
     $self->_warn_about_unknown_file($pps);
   }
+  return;
 }
 
 sub _warn_about_unknown_directory {
@@ -445,9 +449,10 @@ sub _warn_about_unknown_directory {
   if ($name eq '__nameid_version1 0') {
     $self->{VERBOSE}
       and warn "Skipping DIR entry $name (Introductory stuff)\n";
-    return;
+  } else {
+    warn "Unknown DIR entry $name\n";
   }
-  warn "Unknown DIR entry $name\n";
+  return;
 }
 
 sub _warn_about_unknown_file {
@@ -483,6 +488,7 @@ sub _warn_about_unknown_file {
   } else {
     warn "Unknown property $property\n";
   }
+  return;
 }
 
 #
@@ -517,11 +523,17 @@ sub _extract_ole_date {
     $datearr = $pps->{Time1st} unless($datearr);
     $self->{OLEDATE} = $self->_format_date($datearr) if $datearr;
   }
+  return;
 }
 
+#
+# Format a gmt date according to RFC822
+#
 sub _format_date {
   my ($self, $datearr) = @_;
-  return strftime("%a, %d %h %Y %H:%M:%S +0000", @$datearr);
+  my $day = qw(Sun Mon Tue Wed Thu Fri Sat)[strftime("%w", @$datearr)];
+  my $month = qw(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)[strftime("%m", @$datearr) - 1];
+  return strftime("$day, %d $month %Y %H:%M:%S +0000", @$datearr);
 }
 
 # If we didn't get the date from the original header data, we may be able
@@ -533,9 +545,9 @@ sub _format_date {
 sub _submission_id_date {
   my $self = shift;
 
-  my $submission_id = $self->{SUBMISSION_ID} or return undef;
+  my $submission_id = $self->{SUBMISSION_ID} or return;
   $submission_id =~ m/l=.*-(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)(\d\d)Z-.*/
-    or return undef;
+    or return;
   my $year = $1;
   $year += 100 if $year < 20;
   return $self->_format_date([$6,$5,$4,$3,$2-1,$year]);
@@ -546,11 +558,11 @@ sub _parse_item_name {
 
   if ($name =~ /^__substg1 0_(....)(....)$/) {
     my ($property, $encoding) = ($1, $2);
-    if ($encoding eq ENCODING_UNICODE and not ($self->{HAS_UNICODE})) {
-      warn "This msg file contains Unicode fields." 
+    if ($encoding eq $ENCODING_UNICODE and not ($self->{HAS_UNICODE})) {
+      warn "This msg file contains Unicode fields."
 	. " This is currently unsupported.\n";
       $self->{HAS_UNICODE} = 1;
-    } elsif (not (KNOWN_ENCODINGS()->{$encoding})) {
+    } elsif (not $KNOWN_ENCODINGS->{$encoding}) {
       warn "Unknown encoding $encoding. Results may be strange or wrong.\n";
     }
     return ($property, $encoding);
@@ -576,6 +588,7 @@ sub _SaveAttachment {
     body => $att->{DATA});
   $self->_clean_part_header($m);
   $mime->parts_add([$m]);
+  return;
 }
 
 # Set header fields
@@ -585,6 +598,7 @@ sub _AddHeaderField {
   #my $oldvalue = $mime->header($fieldname);
   #return if $oldvalue;
   $mime->header_set($fieldname, $value) if $value;
+  return;
 }
 
 sub _Address {
@@ -634,6 +648,7 @@ sub _clean_part_header {
   unless ($part->content_type =~ /^multipart\//) {
     $part->header_set('MIME-Version')
   };
+  return;
 }
 
 sub _create_mime_plain_body {
@@ -674,6 +689,7 @@ sub _copy_header_data {
   foreach my $tag (grep { !$skipheaders->{uc $_}} $parsed->header_names) {
     $mime->header_set($tag, $parsed->header($tag));
   }
+  return;
 }
 
 # Set header fields
@@ -696,5 +712,7 @@ sub _SetHeaderFields {
   $self->_AddHeaderField($mime, 'Date', $self->_submission_id_date());
 
   # After this, we'll try getting the date from the original headers.
+  return;
 }
 
+1;

@@ -1,20 +1,27 @@
-# http://module-build.sourceforge.net/META-spec.html
-#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
-name:         Email-Outlook-Message
-version:      0.903
-version_from: lib/Email/Outlook/Message.pm
-installdirs:  site
+---
+name: Email-Outlook-Message
+version: 0.904
+author:
+  - 'Matijs van Zuijlen, C<matijs@matijs.net>'
+abstract: Read Outlook .msg files
+license: perl
+resources:
+  license: http://dev.perl.org/licenses/
 requires:
-    Carp:                          0
-    Date::Format:                  2.22
-    Email::MIME::ContentType:      1.014
-    Email::MIME::Creator:          1.454
-    Email::MIME::Modifier:         1.442
-    Email::Simple:                 2.003
-    IO::All:                       0
-    OLE::Storage_Lite:             0.14
-    POSIX:                         0
-    Test::More:                    0
-
-distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.30_01
+  Carp: 0
+  Email::MIME::ContentType: 1.014
+  Email::MIME::Creator: 1.454
+  Email::MIME::Modifier: 1.442
+  Email::Simple: 2.003
+  IO::All: 0
+  OLE::Storage_Lite: 0.14
+  POSIX: 0
+  Test::More: 0
+provides:
+  Email::Outlook::Message:
+    file: lib/Email/Outlook/Message.pm
+    version: 0.904
+generated_by: Module::Build version 0.2808
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.2.html
+  version: 1.2
