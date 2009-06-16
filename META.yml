@@ -1,6 +1,6 @@
 ---
 name: Email-Outlook-Message
-version: 0.905
+version: 0.906
 author:
   - 'Matijs van Zuijlen, C<matijs@matijs.net>'
 abstract: Read Outlook .msg files
@@ -21,8 +21,8 @@ requires:
 provides:
   Email::Outlook::Message:
     file: lib/Email/Outlook/Message.pm
-    version: 0.905
-generated_by: Module::Build version 0.3
+    version: 0.906
+generated_by: Module::Build version 0.33
 meta-spec:
-  url: http://module-build.sourceforge.net/META-spec-v1.2.html
-  version: 1.2
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4

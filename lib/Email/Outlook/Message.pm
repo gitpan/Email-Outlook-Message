@@ -42,7 +42,7 @@ Matijs van Zuijlen, C<matijs@matijs.net>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright 2002, 2004, 2006--2008 by Matijs van Zuijlen
+Copyright 2002, 2004, 2006--2009 by Matijs van Zuijlen
 
 This module is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself. 
@@ -62,7 +62,7 @@ my $DIR_TYPE = 1;
 my $FILE_TYPE = 2;
 
 use vars qw($VERSION);
-$VERSION = "0.905";
+$VERSION = "0.906";
 #
 # Descriptions partially based on mapitags.h
 #
@@ -156,6 +156,10 @@ my $skipheaders = {
 };
 
 my $ENCODING_UNICODE = '001F';
+my $ENCODING_ASCII = '001E';
+my $ENCODING_BINARY = '0102';
+my $ENCODING_DIRECORY = '000D';
+
 my $KNOWN_ENCODINGS = {
   '000D' => 'Directory',
   '001F' => 'Unicode',
@@ -164,36 +168,36 @@ my $KNOWN_ENCODINGS = {
 };
 
 my $MAP_ATTACHMENT_FILE = {
-  '3701' => ["DATA",        0], # Data
-  '3704' => ["SHORTNAME",   1], # Short file name
-  '3707' => ["LONGNAME",    1], # Long file name
-  '370E' => ["MIMETYPE",    1], # mime type
-  '3712' => ["CONTENTID",   1], # content-id
-  '3716' => ["DISPOSITION", 1], # disposition
+  '3701' => "DATA",        # Data
+  '3704' => "SHORTNAME",   # Short file name
+  '3707' => "LONGNAME",    # Long file name
+  '370E' => "MIMETYPE",    # mime type
+  '3712' => "CONTENTID",   # content-id
+  '3716' => "DISPOSITION", # disposition
 };
 
 my $MAP_SUBITEM_FILE = {
-  '1000' => ["BODY_PLAIN",      1], # Body
-  '1013' => ["BODY_HTML",       1], # HTML Version of body
-  '0037' => ["SUBJECT",         1], # Subject
-  '0047' => ["SUBMISSION_ID",   1], # Seems to contain the date
-  '007D' => ["HEAD",            1], # Full headers
-  '0C1A' => ["FROM",            1], # From: Name
-  '0C1E' => ["FROM_ADDR_TYPE",  1], # From: Address type
-  '0C1F' => ["FROM_ADDR",       1], # From: Address
-  '0E04' => ["TO",              1], # To: Names
-  '0E03' => ["CC",              1], # Cc: Names
-  '1035' => ["MESSAGEID",       1], # Message-Id
-  '1042' => ["INREPLYTO",       1], # In reply to Message-Id
+  '1000' => "BODY_PLAIN",      # Body
+  '1013' => "BODY_HTML",       # HTML Version of body
+  '0037' => "SUBJECT",         # Subject
+  '0047' => "SUBMISSION_ID",   # Seems to contain the date
+  '007D' => "HEAD",            # Full headers
+  '0C1A' => "FROM",            # From: Name
+  '0C1E' => "FROM_ADDR_TYPE",  # From: Address type
+  '0C1F' => "FROM_ADDR",       # From: Address
+  '0E04' => "TO",              # To: Names
+  '0E03' => "CC",              # Cc: Names
+  '1035' => "MESSAGEID",       # Message-Id
+  '1042' => "INREPLYTO",       # In reply to Message-Id
 };
 
 my $MAP_ADDRESSITEM_FILE = {
-  '3001' => ["NAME",            1], # Real name
-  '3002' => ["TYPE",            1], # Address type
-  '403D' => ["TYPE",            1], # Address type
-  '3003' => ["ADDRESS",         1], # Address
-  '403E' => ["ADDRESS",         1], # Address
-  '39FE' => ["SMTPADDRESS",     1], # SMTP Address variant
+  '3001' => "NAME",	    # Real name
+  '3002' => "TYPE",         # Address type
+  '403D' => "TYPE",         # Address type
+  '3003' => "ADDRESS",      # Address
+  '403E' => "ADDRESS",      # Address
+  '39FE' => "SMTPADDRESS",  # SMTP Address variant
 };
 
 #
@@ -232,10 +236,7 @@ sub to_email_mime {
   my $bodymime;
   my $mime;
 
-  unless ($self->{BODY_HTML} or $self->{BODY_PLAIN}) {
-    $self->{BODY_PLAIN} = "";
-  }
-  if ($self->{BODY_PLAIN}) {
+  if ($self->{BODY_PLAIN} or not $self->{BODY_HTML}) {
     $plain = $self->_create_mime_plain_body();
   }
   if ($self->{BODY_HTML}) {
@@ -429,16 +430,19 @@ sub _process_pps_file_entry {
   my $name = $self->_get_pps_name($pps);
   my ($property, $encoding) = $self->_parse_item_name($name);
 
-  if (defined $property and my $arr = $map->{$property}) {
+  if (defined $property and my $key = $map->{$property}) {
     my $data = $pps->{Data};
-    if ($arr->[1]) {
+    if ($encoding eq $ENCODING_DIRECORY) {
+      die "Unexpected directory encoding for property $name";
+    }
+    if ($encoding ne $ENCODING_BINARY) {
       if ($encoding eq $ENCODING_UNICODE) {
 	$data = decode("UTF-16LE", $data);
       }
       $data =~ s/\000$//sg;
       $data =~ s/\r\n/\n/sg;
     }
-    $target->{$arr->[0]} = $data;
+    $target->{$key} = $data;
   } else {
     $self->_warn_about_unknown_file($pps);
   }
@@ -450,6 +454,7 @@ sub _warn_about_unknown_directory {
 
   my $name = $self->_get_pps_name($pps);
   if ($name eq '__nameid_version1 0') {
+    # TODO: Use this data to access so-called named properties.
     $self->{VERBOSE}
       and warn "Skipping DIR entry $name (Introductory stuff)\n";
   } else {
@@ -620,6 +625,8 @@ sub _Address {
 sub _ExpandAddressList {
   my ($self, $names) = @_;
 
+  return "" unless defined $names;
+
   my $addresspool = $self->{ADDRESSES};
   my @namelist = split /; */, $names;
   my @result;
@@ -667,13 +674,17 @@ sub _create_mime_plain_body {
 
 sub _create_mime_html_body {
   my $self = shift;
+  my $body = $self->{BODY_HTML};
+  # FIXME: This makes sure tests succeed for now, but is not really
+  # necessary for correct display in the mail reader.
+  $body =~ s/\r\n/\n/sg;
   return Email::MIME->create(
     attributes => {
       content_type => "text/html",
       disposition => "inline",
       encoding => "8bit",
     },
-    body => $self->{BODY_HTML}
+    body => $body
   );
 }
 # Copy original header data.
