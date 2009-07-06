@@ -56,13 +56,14 @@ use Email::MIME::ContentType;
 use OLE::Storage_Lite;
 use POSIX;
 use Encode;
+use IO::String;
 use Carp;
 
 my $DIR_TYPE = 1;
 my $FILE_TYPE = 2;
 
 use vars qw($VERSION);
-$VERSION = "0.906";
+$VERSION = "0.907";
 #
 # Descriptions partially based on mapitags.h
 #
@@ -158,7 +159,7 @@ my $skipheaders = {
 my $ENCODING_UNICODE = '001F';
 my $ENCODING_ASCII = '001E';
 my $ENCODING_BINARY = '0102';
-my $ENCODING_DIRECORY = '000D';
+my $ENCODING_DIRECTORY = '000D';
 
 my $KNOWN_ENCODINGS = {
   '000D' => 'Directory',
@@ -406,13 +407,44 @@ sub _process_attachment_subdirectory {
   my ($property, $encoding) = $self->_parse_item_name($name);
 
   if ($property eq '3701') { # Nested msg file
-    my $msgp = ref($self)->_empty_new();
-    $msgp->_set_verbosity($self->{VERBOSE});
-    $msgp->_process_root_dir($pps);
+    my $is_msg = 1;
+    foreach my $child (@{$pps->{Child}}) {
+      my $name = $self->_get_pps_name($child);
+      unless (
+	$name =~ /^__recip/ or $name =~ /^__attach/
+	  or $name =~ /^__substg1/ or $name =~ /^__nameid/
+	  or $name =~ /^__properties/
+      ) {
+	$is_msg = 0;
+	last;
+      }
+    }
+    if ($is_msg) {
+      my $msgp = ref($self)->_empty_new();
+      $msgp->_set_verbosity($self->{VERBOSE});
+      $msgp->_process_root_dir($pps);
 
-    $att->{DATA} = $msgp->to_email_mime->as_string;
-    $att->{MIMETYPE} = 'message/rfc822';
-    $att->{ENCODING} = '8bit';
+      $att->{DATA} = $msgp->to_email_mime->as_string;
+      $att->{MIMETYPE} = 'message/rfc822';
+      $att->{ENCODING} = '8bit';
+    } else {
+      foreach my $child (@{$pps->{Child}}) {
+	if ($child->{Type} == $FILE_TYPE) {
+	  foreach my $prop ("Time1st", "Time2nd") {
+	    $child->{$prop} = undef;
+	  }
+	}
+      }
+      my $nPps = OLE::Storage_Lite::PPS::Root->new(
+	$pps->{Time1st}, $pps->{Time2nd}, $pps->{Child});
+      my $data;
+      my $io = IO::String->new($data);
+      binmode($io);
+      $nPps->save($io, 1);
+      $att->{DATA} = $data;
+      #      $att->{MIMETYPE} = 'message/rfc822';
+      #	    $att->{ENCODING} = '8bit';
+    }
   } else {
     $self->_warn_about_unknown_directory($pps);
   }
@@ -432,7 +464,7 @@ sub _process_pps_file_entry {
 
   if (defined $property and my $key = $map->{$property}) {
     my $data = $pps->{Data};
-    if ($encoding eq $ENCODING_DIRECORY) {
+    if ($encoding eq $ENCODING_DIRECTORY) {
       die "Unexpected directory encoding for property $name";
     }
     if ($encoding ne $ENCODING_BINARY) {
