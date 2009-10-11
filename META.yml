@@ -1,6 +1,6 @@
 ---
 name: Email-Outlook-Message
-version: 0.908
+version: 0.909
 author:
   - 'Matijs van Zuijlen, C<matijs@matijs.net>'
 abstract: Read Outlook .msg files
@@ -23,7 +23,7 @@ configure_requires:
 provides:
   Email::Outlook::Message:
     file: lib/Email/Outlook/Message.pm
-    version: 0.908
+    version: 0.909
 generated_by: Module::Build version 0.35
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
