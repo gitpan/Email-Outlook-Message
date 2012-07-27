@@ -22,9 +22,9 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
-            "Email::MIME" : "1.900",
+            "Email::MIME" : "1.911",
             "Email::MIME::ContentType" : "1.014",
-            "Email::Simple" : "2.003",
+            "Email::Simple" : "2.102",
             "Encode" : "0",
             "IO::All" : "0",
             "OLE::Storage_Lite" : "0.14",
@@ -37,7 +37,7 @@
    "provides" : {
       "Email::Outlook::Message" : {
          "file" : "lib/Email/Outlook/Message.pm",
-         "version" : "0.911"
+         "version" : "0.912"
       },
       "Email::Outlook::Message::AddressInfo" : {
          "file" : "lib/Email/Outlook/Message/AddressInfo.pm",
@@ -58,5 +58,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.911"
+   "version" : "0.912"
 }

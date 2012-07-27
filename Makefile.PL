@@ -7,9 +7,9 @@ WriteMakefile
   'VERSION_FROM' => 'lib/Email/Outlook/Message.pm',
   'PREREQ_PM' => {
                    'Carp' => '0',
-                   'Email::MIME' => '1.900',
+                   'Email::MIME' => '1.911',
                    'Email::MIME::ContentType' => '1.014',
-                   'Email::Simple' => '2.003',
+                   'Email::Simple' => '2.102',
                    'Encode' => '0',
                    'IO::All' => '0',
                    'OLE::Storage_Lite' => '0.14',
