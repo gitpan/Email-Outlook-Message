@@ -15,13 +15,16 @@ name: Email-Outlook-Message
 provides:
   Email::Outlook::Message:
     file: lib/Email/Outlook/Message.pm
-    version: 0.913
+    version: 0.914
   Email::Outlook::Message::AddressInfo:
     file: lib/Email/Outlook/Message/AddressInfo.pm
+    version: 0.914
   Email::Outlook::Message::Attachment:
     file: lib/Email/Outlook/Message/Attachment.pm
+    version: 0.914
   Email::Outlook::Message::Base:
     file: lib/Email/Outlook/Message/Base.pm
+    version: 0.914
 requires:
   Carp: 0
   Email::MIME: 1.923
@@ -35,4 +38,4 @@ requires:
   perl: 5.006
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.913
+version: 0.914

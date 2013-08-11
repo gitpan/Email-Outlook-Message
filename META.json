@@ -37,16 +37,19 @@
    "provides" : {
       "Email::Outlook::Message" : {
          "file" : "lib/Email/Outlook/Message.pm",
-         "version" : "0.913"
+         "version" : "0.914"
       },
       "Email::Outlook::Message::AddressInfo" : {
-         "file" : "lib/Email/Outlook/Message/AddressInfo.pm"
+         "file" : "lib/Email/Outlook/Message/AddressInfo.pm",
+         "version" : "0.914"
       },
       "Email::Outlook::Message::Attachment" : {
-         "file" : "lib/Email/Outlook/Message/Attachment.pm"
+         "file" : "lib/Email/Outlook/Message/Attachment.pm",
+         "version" : "0.914"
       },
       "Email::Outlook::Message::Base" : {
-         "file" : "lib/Email/Outlook/Message/Base.pm"
+         "file" : "lib/Email/Outlook/Message/Base.pm",
+         "version" : "0.914"
       }
    },
    "release_status" : "stable",
@@ -55,5 +58,5 @@
          "http://dev.perl.org/licenses/"
       ]
    },
-   "version" : "0.913"
+   "version" : "0.914"
 }
