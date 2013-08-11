@@ -6,7 +6,7 @@ build_requires: {}
 configure_requires:
   Module::Build: 0.38
 dynamic_config: 1
-generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.120921'
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.132140'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -15,19 +15,16 @@ name: Email-Outlook-Message
 provides:
   Email::Outlook::Message:
     file: lib/Email/Outlook/Message.pm
-    version: 0.912
+    version: 0.913
   Email::Outlook::Message::AddressInfo:
     file: lib/Email/Outlook/Message/AddressInfo.pm
-    version: 0
   Email::Outlook::Message::Attachment:
     file: lib/Email/Outlook/Message/Attachment.pm
-    version: 0
   Email::Outlook::Message::Base:
     file: lib/Email/Outlook/Message/Base.pm
-    version: 0
 requires:
   Carp: 0
-  Email::MIME: 1.911
+  Email::MIME: 1.923
   Email::MIME::ContentType: 1.014
   Email::Simple: 2.102
   Encode: 0
@@ -38,4 +35,4 @@ requires:
   perl: 5.006
 resources:
   license: http://dev.perl.org/licenses/
-version: 0.912
+version: 0.913
