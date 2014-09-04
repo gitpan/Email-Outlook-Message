@@ -15,6 +15,7 @@ WriteMakefile
                    'File::Basename' => '0',
                    'Getopt::Long' => '0',
                    'IO::All' => '0',
+                   'IO::String' => '0',
                    'OLE::Storage_Lite' => '0.14',
                    'POSIX' => '0',
                    'Pod::Usage' => '0',
