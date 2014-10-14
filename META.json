@@ -1,8 +1,10 @@
 {
    "abstract" : "Read Outlook .msg files",
-   "author" : [],
+   "author" : [
+      "unknown"
+   ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4208",
+   "generated_by" : "Module::Build version 0.421",
    "license" : [
       "perl_5"
    ],
@@ -40,7 +42,7 @@
    "provides" : {
       "Email::Outlook::Message" : {
          "file" : "lib/Email/Outlook/Message.pm",
-         "version" : "0.916"
+         "version" : "0.917"
       },
       "Email::Outlook::Message::AddressInfo" : {
          "file" : "lib/Email/Outlook/Message/AddressInfo.pm"
@@ -61,5 +63,5 @@
          "url" : "https://github.com/mvz/email-outlook-message-perl"
       }
    },
-   "version" : "0.916"
+   "version" : "0.917"
 }
