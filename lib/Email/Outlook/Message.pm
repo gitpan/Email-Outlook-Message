@@ -59,7 +59,7 @@ use strict;
 use warnings;
 use 5.006;
 use vars qw($VERSION);
-$VERSION = "0.917";
+$VERSION = "0.918";
 
 use Email::Simple;
 use Email::MIME::Creator;
@@ -126,7 +126,7 @@ sub _empty_new {
 
   return bless {
     ADDRESSES => [], ATTACHMENTS => [], FROM_ADDR_TYPE => "",
-    HAS_UNICODE => 0, VERBOSE => 0, EMBEDDED => 1
+    VERBOSE => 0, EMBEDDED => 1
   }, $class;
 }
 
@@ -372,7 +372,7 @@ sub _create_mime_plain_body {
   return Email::MIME->create(
     attributes => {
       content_type => "text/plain",
-      charset => "ISO-8859-1",
+      charset => "UTF8",
       disposition => "inline",
       encoding => "8bit",
     },

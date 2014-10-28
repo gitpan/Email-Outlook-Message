@@ -15,7 +15,7 @@ name: Email-Outlook-Message
 provides:
   Email::Outlook::Message:
     file: lib/Email/Outlook/Message.pm
-    version: '0.917'
+    version: '0.918'
   Email::Outlook::Message::AddressInfo:
     file: lib/Email/Outlook/Message/AddressInfo.pm
   Email::Outlook::Message::Attachment:
@@ -41,4 +41,4 @@ requires:
 resources:
   license: http://dev.perl.org/licenses/
   repository: https://github.com/mvz/email-outlook-message-perl
-version: '0.917'
+version: '0.918'
